@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>単語暗記アプリ</title>
+<style>
+body { font-family: Arial; text-align: center; padding: 20px; }
+.card {
+  border: 2px solid #333;
+  padding: 40px;
+  font-size: 24px;
+  margin: 20px auto;
+  width: 300px;
+  cursor: pointer;
+  white-space: pre-line;
+}
+button { padding: 10px 20px; margin: 10px; font-size: 16px; }
+</style>
+</head>
+<body>
+
+<h2>単語暗記アプリ</h2>
+
+<input type="file" id="fileInput"><br><br>
+
+開始番号: <input type="number" id="start" value="1">
+終了番号: <input type="number" id="end" value="50">
+<br><br>
+
+<button onclick="startApp()">スタート</button>
+
+<div class="card" onclick="flip()" id="card">ここに表示</div>
+
+<button onclick="known()">覚えた</button>
+<button onclick="unknown()">覚えてない</button>
+
+<script>
+let data = [];
+let filtered = [];
+let index = 0;
+let flipped = false;
+
+document.getElementById("fileInput").addEventListener("change", function(e) {
+  const file = e.target.files[0];
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    const text = event.target.result;
+    const rows = text.split("\n").slice(1);
+    data = rows.map(row => {
+      const cols = row.split(",");
+      return {
+        no: parseInt(cols[0]),
+        word: cols[1],
+        meaning: cols[2],
+        synonym: cols[3]
+      };
+    });
+    alert("読み込み完了！");
+  };
+  reader.readAsText(file);
+});
+
+function startApp() {
+  const startNo = parseInt(document.getElementById("start").value);
+  const endNo = parseInt(document.getElementById("end").value);
+  filtered = data.filter(d => d.no >= startNo && d.no <= endNo);
+  index = 0;
+  show();
+}
+
+function show() {
+  flipped = false;
+  if (index >= filtered.length) {
+    document.getElementById("card").innerText = "終了！";
+    return;
+  }
+  document.getElementById("card").innerText = filtered[index].word;
+}
+
+function flip() {
+  if (!filtered[index]) return;
+  flipped = !flipped;
+  document.getElementById("card").innerText = flipped
+    ? filtered[index].meaning + "\n" + filtered[index].synonym
+    : filtered[index].word;
+}
+
+function known() {
+  index++;
+  show();
+}
+
+function unknown() {
+  index++;
+  show();
+}
+</script>
+
+</body>
+</html>
