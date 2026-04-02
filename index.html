@@ -6,6 +6,7 @@
 <title>単語暗記アプリ</title>
 <style>
 body { font-family: Arial; text-align: center; padding: 20px; }
+
 .card {
   border: 2px solid #333;
   padding: 40px;
@@ -15,10 +16,22 @@ body { font-family: Arial; text-align: center; padding: 20px; }
   cursor: pointer;
   white-space: pre-line;
 }
+
 button { padding: 10px 20px; margin: 10px; font-size: 16px; }
 </style>
 </head>
+
 <body>
+
+<!-- 🔐 ログイン画面 -->
+<div id="login">
+  <h3>パスワードを入力してください</h3>
+  <input type="password" id="pass">
+  <button onclick="checkPass()">ログイン</button>
+</div>
+
+<!-- 📱 アプリ本体 -->
+<div id="app" style="display:none;">
 
 <h2>単語暗記アプリ</h2>
 
@@ -35,12 +48,28 @@ button { padding: 10px 20px; margin: 10px; font-size: 16px; }
 <button onclick="known()">覚えた</button>
 <button onclick="unknown()">覚えてない</button>
 
+</div>
+
 <script>
 let data = [];
 let filtered = [];
 let index = 0;
 let flipped = false;
 
+// 🔐 パスワードチェック
+function checkPass() {
+  const correct = "is212020";
+  const input = document.getElementById("pass").value;
+
+  if (input === correct) {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "block";
+  } else {
+    alert("パスワードが違います");
+  }
+}
+
+// CSV読み込み
 document.getElementById("fileInput").addEventListener("change", function(e) {
   const file = e.target.files[0];
   const reader = new FileReader();
@@ -61,6 +90,7 @@ document.getElementById("fileInput").addEventListener("change", function(e) {
   reader.readAsText(file);
 });
 
+// スタート
 function startApp() {
   const startNo = parseInt(document.getElementById("start").value);
   const endNo = parseInt(document.getElementById("end").value);
@@ -69,6 +99,7 @@ function startApp() {
   show();
 }
 
+// 表示
 function show() {
   flipped = false;
   if (index >= filtered.length) {
@@ -78,6 +109,7 @@ function show() {
   document.getElementById("card").innerText = filtered[index].word;
 }
 
+// 裏返す
 function flip() {
   if (!filtered[index]) return;
   flipped = !flipped;
@@ -86,6 +118,7 @@ function flip() {
     : filtered[index].word;
 }
 
+// ボタン操作
 function known() {
   index++;
   show();
