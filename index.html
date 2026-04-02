@@ -23,14 +23,13 @@ button { padding: 10px 20px; margin: 10px; font-size: 16px; }
 
 <body>
 
-<!-- 🔐 ログイン画面 -->
+<!-- 🔐 ログイン -->
 <div id="login">
   <h3>パスワードを入力してください</h3>
   <input type="password" id="pass">
   <button onclick="checkPass()">ログイン</button>
 </div>
 
-<!-- 📱 アプリ本体 -->
 <div id="app" style="display:none;">
 
 <h2>単語暗記アプリ</h2>
@@ -41,12 +40,24 @@ button { padding: 10px 20px; margin: 10px; font-size: 16px; }
 終了番号: <input type="number" id="end" value="50">
 <br><br>
 
+<!-- モード -->
+<label><input type="radio" name="mode" value="enToJa" checked> 単語 → 翻訳</label>
+<label><input type="radio" name="mode" value="jaToEn"> 翻訳 → 単語</label>
+<br><br>
+
+<!-- シャッフル -->
+<label><input type="checkbox" id="shuffle"> シャッフルする</label>
+<br><br>
+
 <button onclick="startApp()">スタート</button>
+<button onclick="reviewWrong()">苦手だけ復習</button>
 
 <div class="card" onclick="flip()" id="card">ここに表示</div>
 
 <button onclick="known()">覚えた</button>
 <button onclick="unknown()">覚えてない</button>
+
+<h3 id="score">正答率：0%</h3>
 
 </div>
 
@@ -55,13 +66,17 @@ let data = [];
 let filtered = [];
 let index = 0;
 let flipped = false;
+let wrongList = [];
 
-// 🔐 パスワードチェック
+let correct = 0;
+let total = 0;
+
+// 🔐 パスワード
 function checkPass() {
-  const correct = "is212020";
+  const correctPass = "is212020";
   const input = document.getElementById("pass").value;
 
-  if (input === correct) {
+  if (input === correctPass) {
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
   } else {
@@ -90,42 +105,111 @@ document.getElementById("fileInput").addEventListener("change", function(e) {
   reader.readAsText(file);
 });
 
+// モード取得
+function getMode() {
+  return document.querySelector('input[name="mode"]:checked').value;
+}
+
+// シャッフル
+function shuffleArray(array) {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
 // スタート
 function startApp() {
   const startNo = parseInt(document.getElementById("start").value);
   const endNo = parseInt(document.getElementById("end").value);
+
   filtered = data.filter(d => d.no >= startNo && d.no <= endNo);
+
+  if (document.getElementById("shuffle").checked) {
+    shuffleArray(filtered);
+  }
+
   index = 0;
+  flipped = false;
+  correct = 0;
+  total = 0;
+  wrongList = [];
+
+  updateScore();
   show();
 }
 
 // 表示
 function show() {
   flipped = false;
+
   if (index >= filtered.length) {
     document.getElementById("card").innerText = "終了！";
     return;
   }
-  document.getElementById("card").innerText = filtered[index].word;
+
+  const mode = getMode();
+
+  document.getElementById("card").innerText =
+    mode === "enToJa" ? filtered[index].word : filtered[index].meaning;
 }
 
-// 裏返す
+// 裏返し
 function flip() {
   if (!filtered[index]) return;
+
   flipped = !flipped;
+  const mode = getMode();
+
   document.getElementById("card").innerText = flipped
-    ? filtered[index].meaning + "\n" + filtered[index].synonym
-    : filtered[index].word;
+    ? (mode === "enToJa"
+        ? filtered[index].meaning + "\n" + filtered[index].synonym
+        : filtered[index].word)
+    : (mode === "enToJa"
+        ? filtered[index].word
+        : filtered[index].meaning);
 }
 
-// ボタン操作
+// 覚えた
 function known() {
+  correct++;
+  total++;
+  next();
+}
+
+// 覚えてない
+function unknown() {
+  wrongList.push(filtered[index]);
+  total++;
+  next();
+}
+
+// 次へ
+function next() {
   index++;
+  updateScore();
   show();
 }
 
-function unknown() {
-  index++;
+// 正答率表示
+function updateScore() {
+  const rate = total === 0 ? 0 : Math.round((correct / total) * 100);
+  document.getElementById("score").innerText = "正答率：" + rate + "%";
+}
+
+// 苦手復習
+function reviewWrong() {
+  if (wrongList.length === 0) {
+    alert("苦手単語がありません！");
+    return;
+  }
+
+  filtered = [...wrongList];
+  index = 0;
+  correct = 0;
+  total = 0;
+
+  updateScore();
   show();
 }
 </script>
