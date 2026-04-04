@@ -39,8 +39,9 @@ button { padding: 10px 20px; margin: 10px; font-size: 16px; }
 終了No: <input type="number" id="end" value="50">
 <br><br>
 
-<label><input type="radio" name="mode" value="enToJa" checked> 表：expression</label>
-<label><input type="radio" name="mode" value="jaToEn"> 表：意味側</label>
+<!-- ★ここ変更 -->
+<label><input type="radio" name="mode" value="wordToMeaning" checked> 単語→翻訳</label>
+<label><input type="radio" name="mode" value="meaningToWord"> 翻訳→単語</label>
 <br><br>
 
 <label><input type="checkbox" id="shuffle"> シャッフルする</label>
@@ -81,7 +82,7 @@ function checkPass() {
   }
 }
 
-// CSV読み込み（★列追加）
+// CSV読み込み
 document.getElementById("fileInput").addEventListener("change", function(e) {
   const file = e.target.files[0];
   const reader = new FileReader();
@@ -106,7 +107,7 @@ document.getElementById("fileInput").addEventListener("change", function(e) {
   reader.readAsText(file);
 });
 
-// モード
+// モード取得
 function getMode() {
   return document.querySelector('input[name="mode"]:checked').value;
 }
@@ -140,7 +141,7 @@ function startApp() {
   show();
 }
 
-// 表示（★変更）
+// 表示（★モード対応）
 function show() {
   flipped = false;
 
@@ -150,26 +151,45 @@ function show() {
   }
 
   const item = filtered[index];
+  const mode = getMode();
 
-  document.getElementById("card").innerText =
-    "No." + item.no + "\n\n" +
-    item.expression + "\n\n" +
-    "例文:\n" + item.example;
+  if (mode === "wordToMeaning") {
+    // 単語 → 翻訳
+    document.getElementById("card").innerText =
+      "No." + item.no + "\n\n" +
+      item.expression + "\n\n例文:\n" + item.example;
+  } else {
+    // 翻訳 → 単語
+    document.getElementById("card").innerText =
+      "No." + item.no + "\n\n" +
+      item.meaning + "\n" +
+      item.translation + "\n\n例文の意味:\n" + item.exampleMeaning;
+  }
 }
 
-// 裏返し（★変更）
+// 裏返し（★モード対応）
 function flip() {
   if (!filtered[index]) return;
 
   flipped = !flipped;
   const item = filtered[index];
+  const mode = getMode();
 
-  document.getElementById("card").innerText = flipped
-    ? "No." + item.no + "\n\n" +
-      item.meaning + "\n" +
-      item.translation + "\n\n例文の意味:\n" + item.exampleMeaning
-    : "No." + item.no + "\n\n" +
-      item.expression + "\n\n例文:\n" + item.example;
+  if (mode === "wordToMeaning") {
+    document.getElementById("card").innerText = flipped
+      ? "No." + item.no + "\n\n" +
+        item.meaning + "\n" +
+        item.translation + "\n\n例文の意味:\n" + item.exampleMeaning
+      : "No." + item.no + "\n\n" +
+        item.expression + "\n\n例文:\n" + item.example;
+  } else {
+    document.getElementById("card").innerText = flipped
+      ? "No." + item.no + "\n\n" +
+        item.expression + "\n\n例文:\n" + item.example
+      : "No." + item.no + "\n\n" +
+        item.meaning + "\n" +
+        item.translation + "\n\n例文の意味:\n" + item.exampleMeaning;
+  }
 }
 
 // 覚えた
