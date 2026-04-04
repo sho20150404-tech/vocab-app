@@ -9,10 +9,10 @@ body { font-family: Arial; text-align: center; padding: 20px; }
 
 .card {
   border: 2px solid #333;
-  padding: 40px;
-  font-size: 22px;
+  padding: 30px;
+  font-size: 20px;
   margin: 20px auto;
-  width: 320px;
+  width: 330px;
   cursor: pointer;
   white-space: pre-line;
 }
@@ -81,7 +81,7 @@ function checkPass() {
   }
 }
 
-// CSV読み込み
+// CSV読み込み（★列追加）
 document.getElementById("fileInput").addEventListener("change", function(e) {
   const file = e.target.files[0];
   const reader = new FileReader();
@@ -96,7 +96,8 @@ document.getElementById("fileInput").addEventListener("change", function(e) {
         expression: cols[1],
         meaning: cols[2],
         translation: cols[3],
-        example: cols[4]
+        example: cols[4],
+        exampleMeaning: cols[5]
       };
     });
 
@@ -118,7 +119,7 @@ function shuffleArray(array) {
   }
 }
 
-// スタート（★範囲追加）
+// スタート
 function startApp() {
   const startNo = parseInt(document.getElementById("start").value);
   const endNo = parseInt(document.getElementById("end").value);
@@ -139,7 +140,7 @@ function startApp() {
   show();
 }
 
-// 表示
+// 表示（★変更）
 function show() {
   flipped = false;
 
@@ -149,14 +150,14 @@ function show() {
   }
 
   const item = filtered[index];
-  const mode = getMode();
 
   document.getElementById("card").innerText =
     "No." + item.no + "\n\n" +
-    (mode === "enToJa" ? item.expression : item.meaning);
+    item.expression + "\n\n" +
+    "例文:\n" + item.example;
 }
 
-// 裏返し
+// 裏返し（★変更）
 function flip() {
   if (!filtered[index]) return;
 
@@ -166,8 +167,9 @@ function flip() {
   document.getElementById("card").innerText = flipped
     ? "No." + item.no + "\n\n" +
       item.meaning + "\n" +
-      item.translation + "\n\n例文:\n" + item.example
-    : "No." + item.no + "\n\n" + item.expression;
+      item.translation + "\n\n例文の意味:\n" + item.exampleMeaning
+    : "No." + item.no + "\n\n" +
+      item.expression + "\n\n例文:\n" + item.example;
 }
 
 // 覚えた
