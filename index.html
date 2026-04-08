@@ -84,10 +84,9 @@ let timeLeft = 8;
 
 // パスワード
 function checkPass() {
-  const correctPass = "is212020";
   const input = document.getElementById("pass").value;
 
-  if (input === correctPass) {
+  if (input === "is212020") {
     document.getElementById("login").style.display = "none";
     document.getElementById("app").style.display = "block";
   } else {
@@ -121,9 +120,11 @@ function parseCSVLine(line) {
   return result;
 }
 
-// CSV読み込み
+// ⭐ 修正済み（閉じ括弧OK）
 document.getElementById("fileInput").addEventListener("change", function(e) {
   const file = e.target.files[0];
+  if (!file) return;
+
   const reader = new FileReader();
 
   reader.onload = function(event) {
@@ -131,17 +132,18 @@ document.getElementById("fileInput").addEventListener("change", function(e) {
     const rows = text.split("\n").slice(1);
 
     data = rows
-      .map(row => row.trim())
-      .filter(row => row !== "")
+      .map(r => r.trim())
+      .filter(r => r !== "")
       .map(row => {
         const cols = parseCSVLine(row);
+
         return {
           no: parseInt(cols[0]),
-          expression: cols[1],
-          meaning: cols[2],
-          translation: cols[3],
-          example: cols[4],
-          exampleMeaning: cols[5]
+          expression: cols[1] || "",
+          meaning: cols[2] || "",
+          translation: cols[3] || "",
+          example: cols[4] || "",
+          exampleMeaning: cols[5] || ""
         };
       });
 
@@ -149,11 +151,13 @@ document.getElementById("fileInput").addEventListener("change", function(e) {
   };
 
   reader.readAsText(file);
-}
+
+}); // ← ✅ ここ重要
 
 // モード
 function getMode() {
-  return document.querySelector('input[name="mode"]:checked').value;
+  const selected = document.querySelector('input[name="mode"]:checked');
+  return selected ? selected.value : "wordToMeaning";
 }
 
 // シャッフル
@@ -166,8 +170,8 @@ function shuffleArray(array) {
 
 // スタート
 function startApp() {
-  const startNo = parseInt(document.getElementById("start").value);
-  const endNo = parseInt(document.getElementById("end").value);
+  const startNo = parseInt(document.getElementById("start").value) || 1;
+  const endNo = parseInt(document.getElementById("end").value) || 9999;
 
   filtered = data.filter(d => d.no >= startNo && d.no <= endNo);
 
@@ -184,15 +188,15 @@ function startApp() {
   show();
 }
 
-// 表示（タイマー付き）
+// 表示
 function show() {
-  flipped = false;
-
   clearTimeout(timer1);
   clearTimeout(timer2);
   clearInterval(countdown);
 
-  if (index >= filtered.length) {
+  flipped = false;
+
+  if (!filtered[index]) {
     document.getElementById("card").innerText = "終了！";
     document.getElementById("timer").innerText = "";
     return;
@@ -212,30 +216,20 @@ function show() {
       item.translation + "\n\n例文の意味:\n" + item.exampleMeaning;
   }
 
-  // カウントダウン
   timeLeft = 8;
   document.getElementById("timer").innerText = "残り：" + timeLeft + "秒";
 
   countdown = setInterval(() => {
     timeLeft--;
     document.getElementById("timer").innerText = "残り：" + timeLeft + "秒";
-
-    if (timeLeft <= 0) {
-      clearInterval(countdown);
-    }
+    if (timeLeft <= 0) clearInterval(countdown);
   }, 1000);
 
-  // 8秒後 → 自動表示
   timer1 = setTimeout(() => {
     if (!flipped) {
       flip();
-
       document.getElementById("timer").innerText = "答え表示中...";
-
-      // 3秒後 → 次へ
-      timer2 = setTimeout(() => {
-        unknown();
-      }, 3000);
+      timer2 = setTimeout(() => unknown(), 3000);
     }
   }, 8000);
 }
