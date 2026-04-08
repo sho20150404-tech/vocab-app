@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>単語暗記アプリ</title>
-
 <style>
 body { font-family: Arial; text-align: center; padding: 20px; }
 
@@ -69,7 +68,10 @@ let wrongList = [];
 let correct = 0;
 let total = 0;
 
-// 🔐 パスワード
+let timer1 = null;
+let timer2 = null;
+
+// パスワード
 function checkPass() {
   const correctPass = "is212020";
   const input = document.getElementById("pass").value;
@@ -82,30 +84,34 @@ function checkPass() {
   }
 }
 
-// ✅ CSV1行を正しく分割（ダブルクォート対応）
+// ⭐ 完全CSVパーサー
 function parseCSVLine(line) {
   const result = [];
   let current = "";
-  let insideQuotes = false;
+  let inQuotes = false;
 
   for (let i = 0; i < line.length; i++) {
     const char = line[i];
+    const next = line[i + 1];
 
-    if (char === '"') {
-      insideQuotes = !insideQuotes;
-    } else if (char === ',' && !insideQuotes) {
+    if (char === '"' && inQuotes && next === '"') {
+      current += '"'; // "" → "
+      i++;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === "," && !inQuotes) {
       result.push(current);
       current = "";
     } else {
       current += char;
     }
   }
-
   result.push(current);
+
   return result;
 }
 
-// 📂 CSV読み込み
+// CSV読み込み
 document.getElementById("fileInput").addEventListener("change", function(e) {
   const file = e.target.files[0];
   const reader = new FileReader();
@@ -114,18 +120,21 @@ document.getElementById("fileInput").addEventListener("change", function(e) {
     const text = event.target.result;
     const rows = text.split("\n").slice(1);
 
-    data = rows.map(row => {
-      const cols = parseCSVLine(row);
+    data = rows
+      .map(row => row.trim())
+      .filter(row => row !== "")
+      .map(row => {
+        const cols = parseCSVLine(row);
 
-      return {
-        no: parseInt(cols[0]),
-        expression: cols[1],
-        meaning: cols[2],
-        translation: cols[3],
-        example: cols[4],
-        exampleMeaning: cols[5]
-      };
-    });
+        return {
+          no: parseInt(cols[0]),
+          expression: cols[1],
+          meaning: cols[2],
+          translation: cols[3],
+          example: cols[4],
+          exampleMeaning: cols[5]
+        };
+      });
 
     alert("読み込み完了！");
   };
@@ -133,7 +142,7 @@ document.getElementById("fileInput").addEventListener("change", function(e) {
   reader.readAsText(file);
 });
 
-// モード取得
+// モード
 function getMode() {
   return document.querySelector('input[name="mode"]:checked').value;
 }
@@ -171,6 +180,9 @@ function startApp() {
 function show() {
   flipped = false;
 
+  clearTimeout(timer1);
+  clearTimeout(timer2);
+
   if (index >= filtered.length) {
     document.getElementById("card").innerText = "終了！";
     return;
@@ -189,6 +201,15 @@ function show() {
       item.meaning + "\n" +
       item.translation + "\n\n例文の意味:\n" + item.exampleMeaning;
   }
+
+  timer1 = setTimeout(() => {
+    if (!flipped) {
+      flip();
+      timer2 = setTimeout(() => {
+        unknown();
+      }, 3000);
+    }
+  }, 10000);
 }
 
 // 裏返し
@@ -218,6 +239,8 @@ function flip() {
 
 // 覚えた
 function known() {
+  clearTimeout(timer1);
+  clearTimeout(timer2);
   correct++;
   total++;
   next();
@@ -225,6 +248,8 @@ function known() {
 
 // 覚えてない
 function unknown() {
+  clearTimeout(timer1);
+  clearTimeout(timer2);
   wrongList.push(filtered[index]);
   total++;
   next();
