@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>単語暗記アプリ</title>
+<title>単語暗記アプリ（完全版）</title>
 <style>
 body { font-family: Arial; text-align: center; padding: 20px; }
 
@@ -37,7 +37,7 @@ button { padding: 10px 20px; margin: 10px; font-size: 16px; }
 
 <div id="app" style="display:none;">
 
-<h2>単語暗記アプリ</h2>
+<h2>単語暗記アプリ（完全版）</h2>
 
 <input type="file" id="fileInput"><br><br>
 
@@ -54,6 +54,7 @@ button { padding: 10px 20px; margin: 10px; font-size: 16px; }
 
 <button onclick="startApp()">スタート</button>
 <button onclick="reviewWrong()">苦手だけ復習</button>
+<button onclick="resetWrong()">苦手リセット</button>
 
 <div class="timer" id="timer">残り：8秒</div>
 
@@ -71,7 +72,9 @@ let data = [];
 let filtered = [];
 let index = 0;
 let flipped = false;
-let wrongList = [];
+
+// ⭐ localStorage対応
+let wrongList = JSON.parse(localStorage.getItem("wrongWords") || "[]");
 
 let correct = 0;
 let total = 0;
@@ -81,6 +84,11 @@ let timer2 = null;
 let countdown = null;
 
 let timeLeft = 8;
+
+// 保存
+function saveWrongList() {
+  localStorage.setItem("wrongWords", JSON.stringify(wrongList));
+}
 
 // パスワード
 function checkPass() {
@@ -94,7 +102,7 @@ function checkPass() {
   }
 }
 
-// CSV完全対応
+// CSV
 function parseCSVLine(line) {
   const result = [];
   let current = "";
@@ -120,7 +128,7 @@ function parseCSVLine(line) {
   return result;
 }
 
-// ⭐ 修正済み（閉じ括弧OK）
+// CSV読み込み
 document.getElementById("fileInput").addEventListener("change", function(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -152,7 +160,7 @@ document.getElementById("fileInput").addEventListener("change", function(e) {
 
   reader.readAsText(file);
 
-}); // ← ✅ ここ重要
+}); // ←重要
 
 // モード
 function getMode() {
@@ -182,7 +190,6 @@ function startApp() {
   index = 0;
   correct = 0;
   total = 0;
-  wrongList = [];
 
   updateScore();
   show();
@@ -269,12 +276,19 @@ function known() {
   next();
 }
 
-// 覚えてない
+// 覚えてない（★重複防止＋保存）
 function unknown() {
   clearTimeout(timer1);
   clearTimeout(timer2);
   clearInterval(countdown);
-  wrongList.push(filtered[index]);
+
+  const item = filtered[index];
+
+  if (!wrongList.some(w => w.no === item.no)) {
+    wrongList.push(item);
+    saveWrongList(); // ⭐ 保存
+  }
+
   total++;
   next();
 }
@@ -306,6 +320,13 @@ function reviewWrong() {
 
   updateScore();
   show();
+}
+
+// リセット
+function resetWrong() {
+  wrongList = [];
+  saveWrongList();
+  alert("苦手リストをリセットしました！");
 }
 </script>
 
